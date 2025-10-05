@@ -151,12 +151,13 @@ def decrypt(key, cipher):
 def test():
     assert (sys.version_info >= (3,4))
     keys = generate_keys()
-    priv = keys['privateKey']
-    pub = keys['publicKey']
-    message = input("Enter the message to encrypt: ")
-    cipher = encrypt(pub, message)
+    private_key = keys['privateKey']
+    public_key = keys['publicKey']
+    message = "Hello, this is a test message for ElGamal encryption!"
+    cipher = encrypt(public_key, message)
+    print("\nOriginal Message:\n", message)
     print("\nEncrypted Ciphertext:\n", cipher)
-    plain = decrypt(priv, cipher)
+    plain = decrypt(private_key, cipher)
     print("\nDecrypted Message:\n", plain)  
     print("\nDecryption Successful: ", end="")  
     return message == plain
