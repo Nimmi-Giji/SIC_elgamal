@@ -1,5 +1,7 @@
 import math
+from pydoc import plain
 import random
+import sys
 
 class PrivateKey(object):
     def __init__(self, p=None, g=None, x=None, iNumBits=0):
@@ -117,3 +119,48 @@ def generate_keys(iNumBits=256, iConfidence=32):
     publicKey = PublicKey(p, g, h, iNumBits)
     privateKey = PrivateKey(p, g, x, iNumBits)
     return {'privateKey': privateKey, 'publicKey': publicKey}
+
+def encrypt(key, sPlaintext):
+		z = encode(sPlaintext, key.iNumBits)
+		cipher_pairs = []
+		for i in z:
+				y = random.randint( 0, key.p )
+				c = modexp( key.g, y, key.p )
+				d = (i*modexp( key.h, y, key.p)) % key.p
+				cipher_pairs.append( [c, d] )
+		encryptedStr = ""
+		for pair in cipher_pairs:
+				encryptedStr += str(pair[0]) + ' ' + str(pair[1]) + ' '
+		return encryptedStr
+
+def decrypt(key, cipher):
+		plaintext = []
+		cipherArray = cipher.split()
+		if (not len(cipherArray) % 2 == 0):
+				return "Malformed Cipher Text"
+		for i in range(0, len(cipherArray), 2):
+				c = int(cipherArray[i])
+				d = int(cipherArray[i+1])
+				s = modexp( c, key.x, key.p )
+				plain = (d*modexp( s, key.p-2, key.p)) % key.p
+				plaintext.append( plain )
+		decryptedText = decode(plaintext, key.iNumBits)
+		decryptedText = "".join([ch for ch in decryptedText if ch != '\x00'])
+		return decryptedText
+
+def test():
+    assert (sys.version_info >= (3,4))
+    keys = generate_keys()
+    priv = keys['privateKey']
+    pub = keys['publicKey']
+    message = input("Enter the message to encrypt: ")
+    cipher = encrypt(pub, message)
+    print("\nEncrypted Ciphertext:\n", cipher)
+    plain = decrypt(priv, cipher)
+    print("\nDecrypted Message:\n", plain)  
+    print("\nDecryption Successful: ", end="")  
+    return message == plain
+
+if __name__ == "__main__":
+    result = test()
+    print(result)
