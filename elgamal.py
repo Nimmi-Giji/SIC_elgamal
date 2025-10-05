@@ -1,6 +1,20 @@
 import math
 import random
 
+class PrivateKey(object):
+    def __init__(self, p=None, g=None, x=None, iNumBits=0):
+        self.p = p
+        self.g = g
+        self.x = x
+        self.iNumBits = iNumBits
+
+class PublicKey(object):
+    def __init__(self, p=None, g=None, h=None, iNumBits=0):
+        self.p = p
+        self.g = g
+        self.h = h
+        self.iNumBits = iNumBits
+
 def gcd(a, b):
     while b != 0:
         c = a % b
@@ -66,3 +80,40 @@ def find_prime(iNumBits, iConfidence):
         if SS(p, iConfidence):
             return p
 
+def encode(sPlaintext, iNumBits):
+    byte_array = bytearray(sPlaintext, 'utf-16')
+    z = []
+    k = iNumBits // 8
+    j = -1 * k
+    num = 0
+    for i in range(len(byte_array)):
+        if i % k == 0:
+            j += k
+            num = 0
+            z.append(0)
+        z[j // k] += byte_array[i] * (2 ** (8 * (i % k)))
+    return z
+
+def decode(aiPlaintext, iNumBits):
+    bytes_array = []
+    k = iNumBits // 8
+    for num in aiPlaintext:
+        for i in range(k):
+            temp = num
+            for j in range(i + 1, k):
+                temp = temp % (2 ** (8 * j))
+            letter = temp // (2 ** (8 * i))
+            bytes_array.append(letter)
+            num = num - (letter * (2 ** (8 * i)))
+    decodedText = bytearray(b for b in bytes_array).decode('utf-16')
+    return decodedText
+
+def generate_keys(iNumBits=256, iConfidence=32):
+    p = find_prime(iNumBits, iConfidence)
+    g = find_primitive_root(p)
+    g = modexp(g, 2, p)
+    x = random.randint(1, (p - 1) // 2)
+    h = modexp(g, x, p)
+    publicKey = PublicKey(p, g, h, iNumBits)
+    privateKey = PrivateKey(p, g, x, iNumBits)
+    return {'privateKey': privateKey, 'publicKey': publicKey}
